@@ -1,0 +1,233 @@
+package xmlgen
+
+import (
+	"bytes"
+	"encoding/xml"
+	"io"
+	"strings"
+	"testing"
+)
+
+type xAction struct {
+	Application string `xml:"application,attr"`
+	Data        string `xml:"data,attr"`
+	Inline      string `xml:"inline,attr"`
+}
+type xCondition struct {
+	Mday    string    `xml:"mday,attr"`
+	Mon     string    `xml:"mon,attr"`
+	Year    string    `xml:"year,attr"`
+	Break   string    `xml:"break,attr"`
+	Actions []xAction `xml:"action"`
+}
+type xInclude struct {
+	XMLName   xml.Name `xml:"include"`
+	Extension []struct {
+		Name       string       `xml:"name,attr"`
+		Continue   string       `xml:"continue,attr"`
+		Conditions []xCondition `xml:"condition"`
+	} `xml:"extension"`
+}
+
+func parse(t *testing.T, b []byte) xInclude {
+	t.Helper()
+	// Strict well-formedness check over every token.
+	d := xml.NewDecoder(bytes.NewReader(b))
+	d.Strict = true
+	for {
+		_, err := d.Token()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			t.Fatalf("XML not well formed: %v\n%s", err, b)
+		}
+	}
+	var inc xInclude
+	if err := xml.Unmarshal(b, &inc); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if len(inc.Extension) != 1 {
+		t.Fatalf("want exactly one extension, got %d", len(inc.Extension))
+	}
+	return inc
+}
+
+func gen(t *testing.T, in Input) Result {
+	t.Helper()
+	r, err := Generate(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return r
+}
+
+// AT-09: five unique variables sharing Jan 1 -> one condition, five actions.
+func TestFiveVariablesOneCondition(t *testing.T) {
+	cal := map[string][]Entry{}
+	for _, v := range []string{"e-working-time", "d-working-time", "c-working-time", "b-working-time", "a-working-time"} {
+		cal[v] = []Entry{{Date: "2027-01-01", Label: "New Year's Day"}}
+	}
+	r := gen(t, Input{Year: 2027, Calendars: cal})
+	inc := parse(t, r.XML)
+	conds := inc.Extension[0].Conditions
+	if len(conds) != 1 || len(conds[0].Actions) != 5 {
+		t.Fatalf("want 1 condition with 5 actions, got %+v", conds)
+	}
+	if r.Conditions != 1 || r.Actions != 5 || r.Variables != 5 {
+		t.Fatalf("bad counts %+v", r)
+	}
+	// sorted lexicographically
+	for i, want := range []string{"a", "b", "c", "d", "e"} {
+		if conds[0].Actions[i].Data != want+"-working-time=false" {
+			t.Fatalf("action %d = %s", i, conds[0].Actions[i].Data)
+		}
+	}
+	if !strings.Contains(string(r.XML), "<!-- New Year's Day -->") {
+		t.Fatal("missing label comment")
+	}
+}
+
+// AT-10: duplicated entries of one variable on a date produce one action.
+func TestNoDuplicateActions(t *testing.T) {
+	r := gen(t, Input{Year: 2027, Calendars: map[string][]Entry{
+		"jwd-working-time": {{Date: "2027-01-01"}, {Date: "2027-01-01"}},
+	}})
+	if c := strings.Count(string(r.XML), "jwd-working-time=false"); c != 1 {
+		t.Fatalf("want 1 action, got %d", c)
+	}
+}
+
+// AT-11 / AT-12: exact attributes, sorted, stable, false/inline only.
+func TestAttributesSortingStability(t *testing.T) {
+	in := Input{Year: 2027, Calendars: map[string][]Entry{
+		"mespace-Ramkamhaeng-working-time": {{Date: "2027-12-31", Label: "New Year's Eve"}, {Date: "2027-04-13", Label: "Songkran"}},
+		"jwd-working-time":                 {{Date: "2027-04-13", Label: "Songkran"}, {Date: "2027-01-01", Label: "New Year's Day"}},
+		"mespace-patong-working-time":      {{Date: "2027-06-03", Label: "Extra"}},
+	}}
+	r1 := gen(t, in)
+	r2 := gen(t, in)
+	if !bytes.Equal(r1.XML, r2.XML) {
+		t.Fatal("output not byte-for-byte stable")
+	}
+	inc := parse(t, r1.XML)
+	ext := inc.Extension[0]
+	if ext.Name != "holidays_2027" || ext.Continue != "true" {
+		t.Fatalf("bad extension %+v", ext)
+	}
+	wantDates := []string{"01/01", "13/04", "03/06", "31/12"}
+	if len(ext.Conditions) != len(wantDates) {
+		t.Fatalf("want %d conditions got %d", len(wantDates), len(ext.Conditions))
+	}
+	for i, c := range ext.Conditions {
+		if c.Mday+"/"+c.Mon != wantDates[i] || c.Year != "2027" || c.Break != "never" {
+			t.Fatalf("condition %d: %+v", i, c)
+		}
+		for _, a := range c.Actions {
+			if a.Application != "set" || a.Inline != "true" || !strings.HasSuffix(a.Data, "=false") {
+				t.Fatalf("bad action %+v", a)
+			}
+		}
+	}
+	// Songkran: two different variables in one condition, sorted, case preserved.
+	s := ext.Conditions[1].Actions
+	if len(s) != 2 || s[0].Data != "jwd-working-time=false" || s[1].Data != "mespace-Ramkamhaeng-working-time=false" {
+		t.Fatalf("bad songkran actions %+v", s)
+	}
+	// Extra holiday only on its own date.
+	if len(ext.Conditions[2].Actions) != 1 || ext.Conditions[2].Actions[0].Data != "mespace-patong-working-time=false" {
+		t.Fatalf("extra date wrong: %+v", ext.Conditions[2])
+	}
+	if strings.Contains(string(r1.XML), "=true") {
+		t.Fatal("must never set true")
+	}
+	if r1.Filename != "freeswitch_holidays_2027.xml" {
+		t.Fatal(r1.Filename)
+	}
+}
+
+func TestExactFormat(t *testing.T) {
+	r := gen(t, Input{Year: 2027, Calendars: map[string][]Entry{
+		"jwd-working-time":  {{Date: "2027-01-01", Label: "New Year's Day"}},
+		"dits-working-time": {{Date: "2027-01-01", Label: "New Year's Day"}},
+	}})
+	want := `<include>
+  <!-- Generated by xmlholiday for 2027. Holiday overrides only: sets working-time variables to false. -->
+  <!-- break="never" is a PROVISIONAL setting; verify against the deployed FreeSWITCH dialplan before production use. -->
+  <extension name="holidays_2027" continue="true">
+    <!-- New Year's Day -->
+    <condition mday="01" mon="01" year="2027" break="never">
+      <action application="set" data="dits-working-time=false" inline="true" />
+      <action application="set" data="jwd-working-time=false" inline="true" />
+    </condition>
+  </extension>
+</include>
+`
+	if string(r.XML) != want {
+		t.Fatalf("got:\n%s\nwant:\n%s", r.XML, want)
+	}
+}
+
+func TestBreakConfigurable(t *testing.T) {
+	r := gen(t, Input{Year: 2026, Break: "on-true", Calendars: map[string][]Entry{"x": {{Date: "2026-01-01"}}}})
+	if parse(t, r.XML).Extension[0].Conditions[0].Break != "on-true" {
+		t.Fatal("break not applied")
+	}
+	if _, err := Generate(Input{Year: 2026, Break: "sometimes"}); err == nil {
+		t.Fatal("invalid break accepted")
+	}
+}
+
+func TestEscapingAndComments(t *testing.T) {
+	r := gen(t, Input{Year: 2027, Calendars: map[string][]Entry{
+		`a&b<"c">'d'`: {{Date: "2027-02-01", Label: "Bad -- label -->"}},
+	}})
+	inc := parse(t, r.XML)
+	if got := inc.Extension[0].Conditions[0].Actions[0].Data; got != `a&b<"c">'d'=false` {
+		t.Fatalf("escaping round trip failed: %s", got)
+	}
+}
+
+func TestAmbiguousLabelOmitted(t *testing.T) {
+	r := gen(t, Input{Year: 2027, Calendars: map[string][]Entry{
+		"a": {{Date: "2027-03-01", Label: "One"}},
+		"b": {{Date: "2027-03-01", Label: "Two"}},
+	}})
+	if strings.Contains(string(r.XML), "One") || strings.Contains(string(r.XML), "Two") {
+		t.Fatal("ambiguous labels must not be emitted")
+	}
+}
+
+func TestLeapYearAndBoundaries(t *testing.T) {
+	r := gen(t, Input{Year: 2028, Calendars: map[string][]Entry{"a": {{Date: "2028-02-29"}, {Date: "2028-12-31"}, {Date: "2028-01-01"}}}})
+	c := parse(t, r.XML).Extension[0].Conditions
+	if len(c) != 3 || c[0].Mday != "01" || c[1].Mday != "29" || c[1].Mon != "02" || c[2].Mon != "12" {
+		t.Fatalf("bad %+v", c)
+	}
+	for _, bad := range []string{"2027-02-29", "2027-13-01", "2027-1-1", "2026-12-31", "2028-01-01", ""} {
+		if _, err := Generate(Input{Year: 2027, Calendars: map[string][]Entry{"a": {{Date: bad}}}}); err == nil {
+			t.Fatalf("invalid/out-of-year date %q accepted", bad)
+		}
+	}
+}
+
+func TestInvalidVariables(t *testing.T) {
+	for _, v := range []string{"", " a", "a b", "a=b", "a/b", "a\n"} {
+		if _, err := Generate(Input{Year: 2027, Calendars: map[string][]Entry{v: {{Date: "2027-01-01"}}}}); err == nil {
+			t.Fatalf("variable %q accepted", v)
+		}
+	}
+}
+
+func TestEmptyIsValidWrapper(t *testing.T) {
+	r := gen(t, Input{Year: 2027})
+	inc := parse(t, r.XML)
+	if len(inc.Extension[0].Conditions) != 0 || r.Actions != 0 {
+		t.Fatal("expected empty wrapper")
+	}
+	// variable with no dates -> no empty condition
+	r = gen(t, Input{Year: 2027, Calendars: map[string][]Entry{"a": nil}})
+	if strings.Contains(string(r.XML), "<condition") {
+		t.Fatal("empty condition emitted")
+	}
+}

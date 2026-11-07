@@ -1,0 +1,14 @@
+<!-- SYNTHETIC example in the structure of 01-tod-group.xml, for testing "xmlholiday import". Not real holiday data. -->
+<include>
+  <extension name="group_holidays_2026" continue="true">
+    <!-- New Year's Day -->
+    <condition mday="01" mon="01" year="2026" break="never">
+      <action application="set" data="jwd-working-time=false" inline="true" />
+      <action application="set" data="dits-working-time=false" inline="true" />
+    </condition>
+    <!-- Songkran -->
+    <condition mday="13-15" mon="04" year="2026" break="never">
+      <action application="set" data="jwd-working-time=false" inline="true" />
+    </condition>
+  </extension>
+</include>

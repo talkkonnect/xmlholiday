@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FreeSWITCH Holiday Calendar</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!-- Inline icon sprite (no external fonts/CDN: the UI must work offline) -->
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <defs>
+    <symbol id="i-hub" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/><path d="M6.5 6.5l3.4 3.4M17.5 6.5l-3.4 3.4M6.5 17.5l3.4-3.4M17.5 17.5l-3.4-3.4"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+    <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+    <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 9l3 3-3 3M12 15h6"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9M4 9v11h16V9M3 9h18M9 20v-6h6v6"/></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22v-4h6v4M8 6h.01M12 6h.01M16 6h.01M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M12 12v9M8 17l4 4 4-4"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+    <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 21h18"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 15l2.5 2.5L16 13"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-info"viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
+  </defs>
+</svg>
+
+<header class="shell">
+  <div class="cmdbar">
+    <div class="brand"><svg class="i brand-ic"><use href="#i-hub"/></svg><span>FreeSWITCH Holiday Engine</span></div>
+    <span class="vsep"></span>
+    <span class="pill-env">Holiday overrides · XML generator</span>
+    <span class="spacer"></span>
+    <span class="pill-status" title="This tool only generates XML. It never contacts, deploys to or reloads FreeSWITCH."><span class="dot"></span>Generate only · never auto-deploys</span>
+  </div>
+  <div class="tabbar">
+    <nav>
+      <button class="tab active" data-tab="a">A - Companies &amp; Variables</button>
+      <button class="tab" data-tab="b">B - Holiday Calendar &amp; Generator</button>
+      <button id="btnSettings" class="tab-link"><svg class="i"><use href="#i-settings"/></svg>Settings</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- ================= SCREEN A ================= -->
+<section id="screenA" class="screen">
+  <div class="workbench">
+    <div class="wb-row">
+      <div class="wb-title">
+        <div class="tile"><svg class="i"><use href="#i-building"/></svg></div>
+        <div class="min0">
+          <div class="title-line"><h1>Companies &amp; Variable Registry</h1><span class="tag-mono">FreeSWITCH variables</span></div>
+          <p class="stats" id="aStats"></p>
+        </div>
+      </div>
+      <div class="wb-actions">
+        <span id="aDirty" class="dirty hidden">● unsaved changes</span>
+        <button id="aRevert" class="btn soft"><svg class="i"><use href="#i-undo"/></svg>Discard</button>
+        <button id="aSave" class="btn primary"><svg class="i"><use href="#i-save"/></svg>Save Changes <span class="kbd">Ctrl+S</span></button>
+        <button id="aAddCompany" class="btn secondary"><svg class="i"><use href="#i-plus"/></svg>New Company</button>
+      </div>
+    </div>
+    <div class="wb-row sub">
+      <div class="search"><svg class="i"><use href="#i-search"/></svg><input id="aSearch" type="search" placeholder="Search company name, branch, or FreeSWITCH variable…"></div>
+      <div class="seg" id="aFilter">
+        <button data-f="all" class="on">All</button>
+        <button data-f="branches">With Branches</button>
+        <button data-f="shared">Shared Variables</button>
+      </div>
+      <span class="spacer"></span>
+      <label class="check"><input type="checkbox" id="aShowInactive" checked> Show inactive entities</label>
+    </div>
+  </div>
+
+  <div id="aMsg" class="msg hidden"></div>
+
+  <div class="card registry">
+    <div class="reg-scroll">
+      <div class="reg-grid reg-head">
+        <div>Company / Branch hierarchy</div>
+        <div>Working-time variable <span class="muted-h">(case-sensitive, exact)</span></div>
+        <div class="c">Calendar scope &amp; linkage</div>
+        <div class="c">Active</div>
+        <div class="r">Actions</div>
+      </div>
+      <div id="aBody"></div>
+    </div>
+  </div>
+
+  <div class="infocard">
+    <svg class="i"><use href="#i-terminal"/></svg>
+    <div>
+      <h4>Dialplan variable rule</h4>
+      <p>Variables are FreeSWITCH channel variables and are stored exactly as typed. All assignments that use the same variable share
+        <b>one calendar per year</b>. For a company with branches, register variables on the branches; a company-level variable is only
+        generated if you explicitly add one. Deactivate instead of deleting.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SCREEN B ================= -->
+<section id="screenB" class="screen hidden">
+  <div class="card scope-card">
+    <div class="scope-left">
+      <div class="scope-top">
+        <div class="yearstep">
+          <button id="bYearPrev" class="icon-btn" title="Previous year"><svg class="i"><use href="#i-chev-l"/></svg></button>
+          <span class="yr"><svg class="i"><use href="#i-calendar"/></svg><input id="bYear" type="number" min="1900" max="9999" class="year"></span>
+          <button id="bYearNext" class="icon-btn" title="Next year"><svg class="i"><use href="#i-chev-r"/></svg></button>
+        </div>
+        <label class="fld"><span class="lbl">Tenant scope</span><select id="bCompany"></select></label>
+        <label class="fld" id="bBranchWrap"><span class="lbl">Branch</span><select id="bBranch"></select></label>
+        <label class="fld" id="bVarWrap"><span class="lbl">Variable</span><select id="bVariable"></select></label>
+      </div>
+      <div class="target-chip"><svg class="i"><use href="#i-link"/></svg><span id="bVarDisplay" class="vardisplay"></span><span class="tc-note">(override target)</span></div>
+    </div>
+    <div class="scope-right">
+      <div class="btnrow">
+        <button id="bLoadSugg" class="btn tint"><svg class="i"><use href="#i-cloud"/></svg>Load Thai Holiday Suggestions</button>
+      </div>
+      <div class="btnrow">
+        <button id="bCopyFrom" class="btn ghost"><svg class="i"><use href="#i-copy"/></svg>Copy From…</button>
+        <button id="bBulk" class="btn ghost hidden"><svg class="i"><use href="#i-send"/></svg>Apply to variables…</button>
+      </div>
+      <div class="btnrow">
+        <span id="bDirty" class="dirty hidden">● unsaved changes</span>
+        <button id="bSave" class="btn primary"><svg class="i"><use href="#i-save"/></svg>Save Calendar <span class="kbd">Ctrl+S</span></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="bShared" class="shared hidden"></div>
+  <div id="bNotice" class="msg hidden"></div>
+  <div id="bSugg" class="sugg hidden"></div>
+
+  <div class="picker">
+    <div class="card listcol">
+      <div class="lc-head">
+        <svg class="i"><use href="#i-bank"/></svg><h3>Available Holiday Bank</h3><span id="bAvailCount" class="count-badge"></span>
+        <span class="spacer"></span><button id="bHlAllLeft" class="link">Highlight All</button>
+      </div>
+      <div class="lc-tools">
+        <div class="search sm"><svg class="i"><use href="#i-search"/></svg><input id="bFilterLeft" type="search" placeholder="Filter available holidays…"></div>
+        <span id="bPoolTag" class="tag-mono"></span>
+      </div>
+      <ul id="bAvail" class="hlist"></ul>
+    </div>
+
+    <div class="movecol card">
+      <div class="mc-lbl">Transfer</div>
+      <button id="bRight" class="btn primary" title="Move highlighted holidays to the target calendar">Add Selected <svg class="i"><use href="#i-chev-r"/></svg></button>
+      <button id="bLeft" class="btn ghost" title="Move highlighted holidays back to Available"><svg class="i"><use href="#i-chev-l"/></svg> Remove</button>
+      <hr>
+      <button id="bSelectAll" class="btn ghost mono sm">» Select All</button>
+      <button id="bRemoveAll" class="btn ghost mono sm">« Reset to Clean</button>
+    </div>
+
+    <div class="card listcol">
+      <div class="lc-head">
+        <svg class="i"><use href="#i-target"/></svg><h3>Target Entity Scope</h3><span id="bSelCount" class="count-badge green"></span>
+        <span class="spacer"></span><span id="bRule" class="rule"></span>
+      </div>
+      <div class="lc-tools">
+        <div class="search sm"><svg class="i"><use href="#i-search"/></svg><input id="bFilterRight" type="search" placeholder="Search applied holidays…"></div>
+        <button id="bHlAllRight" class="link">Highlight All</button>
+      </div>
+      <ul id="bSelected" class="hlist sel"></ul>
+    </div>
+  </div>
+
+  <div class="card customcard">
+    <div class="custom-row">
+      <input type="date" id="bCustomDate">
+      <input id="bCustomLabel" placeholder="Custom holiday name (e.g. Company Foundation Day)">
+      <button id="bAddCustom" class="btn primary"><svg class="i"><use href="#i-plus"/></svg>Add Custom Date</button>
+      <button id="bDeleteHl" class="btn danger" title="Delete the highlighted holidays from the Available list (Save to make it permanent)" disabled><svg class="i"><use href="#i-trash"/></svg>Delete highlighted</button>
+    </div>
+    <div class="legend">
+      <span class="lg"><i class="sw sel"></i>Selected (approved)</span>
+      <span class="lg"><i class="sw avail"></i>Available pool</span>
+      <span class="lg"><i class="sw cust"></i>Custom / manual</span>
+      <span class="lg"><i class="sw wknd"></i>Weekend</span>
+    </div>
+  </div>
+
+  <div class="card matrix">
+    <div class="mx-head">
+      <svg class="i"><use href="#i-grid"/></svg>
+      <div class="min0">
+        <h2>Annual Distribution Matrix — <span id="bMxYear"></span></h2>
+        <p>Click an empty day to create a custom holiday (it appears in Available). Click a holiday day to highlight it.</p>
+      </div>
+      <span class="spacer"></span>
+      <span id="bMxCount" class="badge-green"></span>
+    </div>
+    <div id="bCalendar" class="yearcal"></div>
+  </div>
+
+  <div class="xmlcard">
+    <div class="xc-head">
+      <div class="min0">
+        <div class="xc-title"><svg class="i"><use href="#i-terminal"/></svg><h2>XML Dialplan Preview</h2><span class="tag-auto">Auto-generated</span></div>
+        <div class="xc-meta">
+          <span>Target: <b id="bXmlFile">—</b></span>
+          <span id="bSummary" class="summary"></span>
+        </div>
+      </div>
+      <div class="xc-actions">
+        <button id="bPreview" class="btn dark"><svg class="i"><use href="#i-eye"/></svg>Preview XML</button>
+        <button id="bCopyXml" class="btn dark"><svg class="i"><use href="#i-copy"/></svg>Copy XML</button>
+        <button id="bDownload" class="btn primary"><svg class="i"><use href="#i-download"/></svg>Download .xml</button>
+        <button id="bReport" class="btn dark" title="PDF of every company, its variables and saved holidays for this year — for checking before deployment"><svg class="i"><use href="#i-file"/></svg>Calendar Report (PDF)</button>
+      </div>
+    </div>
+    <div class="xc-note"><svg class="i"><use href="#i-alert"/></svg>
+      <span><b>PROVISIONAL:</b> break semantics are not validated against FreeSWITCH. Test with the deployed dialplan before production use.
+        Preview and Download use <b>saved</b> data only. This tool never deploys to or reloads FreeSWITCH.</span></div>
+    <div id="bXmlWrap" class="hidden">
+      <div id="bWarnings" class="warnings"></div>
+      <pre id="bXml"></pre>
+    </div>
+    <div class="xc-foot"><span id="bXmlStatus">Click “Preview XML” to render the saved dialplan for this year.</span><span id="bXmlBreak"></span></div>
+  </div>
+</section>
+</main>
+
+<!-- dialogs -->
+<dialog id="dlgSettings">
+  <form method="dialog">
+    <div class="dlg-head"><svg class="i"><use href="#i-settings"/></svg><h3>Settings</h3></div>
+    <label class="fld"><span class="lbl">Condition break value</span>
+      <select id="sBreak"><option>never</option><option>on-true</option><option>on-false</option><option>always</option></select>
+    </label>
+    <p class="warn"><b>PROVISIONAL:</b> <code>break="never"</code> is the prototype default. The reference group file uses <code>never</code>, MeSpace uses <code>on-true</code>.
+      Test against the deployed FreeSWITCH dialplan before production use.</p>
+    <label class="fld"><span class="lbl">Default export filename</span>
+      <input id="sExportName" class="wide mono-in" placeholder="freeswitch_holidays_{year}.xml">
+    </label>
+    <p class="hint">e.g. <code>01-tod-holidays.xml</code>. Use <code>{year}</code> to insert the export year. Leave empty for the default. Letters, digits, <code>.</code> <code>_</code> <code>-</code> only; <code>.xml</code> is added if missing.</p>
+    <fieldset><legend>Holiday suggestion providers</legend>
+      <label class="check"><input type="checkbox" id="sProvBot"> Bank of Thailand (official)</label>
+      <input id="sBotUrl" class="wide mono-in" placeholder="BOT URL template with {year}">
+      <label class="check"><input type="checkbox" id="sProvIcs"> Google public calendar ICS (unverified)</label>
+      <input id="sIcsUrl" class="wide mono-in" placeholder="ICS URL">
+    </fieldset>
+    <div class="dlgbtns"><button value="cancel" class="btn soft">Cancel</button><button id="sSave" value="default" class="btn primary">Save settings</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgCopy">
+  <form method="dialog">
+    <div class="dlg-head"><svg class="i"><use href="#i-copy"/></svg><h3>Copy dates from…</h3></div>
+    <label class="fld"><span class="lbl">Source</span><select id="cSource"></select></label>
+    <label class="fld"><span class="lbl">Year</span><input id="cYear" type="number" class="year"></label>
+    <label class="fld"><span class="lbl">Mode</span><select id="cMode"><option value="replace">Replace current selection</option><option value="merge">Add to current selection</option></select></label>
+    <div id="cInfo" class="msg"></div>
+    <div class="dlgbtns"><button value="cancel" class="btn soft">Cancel</button><button id="cLoad" value="default" class="btn primary">Copy (unsaved)</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgBulk">
+  <form method="dialog">
+    <div class="dlg-head"><svg class="i"><use href="#i-send"/></svg><h3>Apply holidays to variable calendars</h3></div>
+    <div id="kDates" class="msg"></div>
+    <div id="kVars" class="varlist"></div>
+    <div id="kPreview"></div>
+    <p class="hint">Manual exclusions (dates a calendar explicitly removed) are never overwritten.</p>
+    <div class="dlgbtns"><button value="cancel" class="btn soft">Close</button><button id="kPrev" type="button" class="btn ghost">Preview</button><button id="kCommit" type="button" class="btn primary" disabled>Save to calendars</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgDocs" class="wide-dlg">
+  <form method="dialog">
+    <div class="dlg-head"><svg class="i"><use href="#i-file"/></svg><h3 id="dTitle">Holiday announcements</h3></div>
+    <p class="hint">Keep each company's official holiday announcement (PDF) per year so it can be checked if a calendar is ever disputed.
+      Documents are for reference only; they do not change calendars or the generated XML.</p>
+    <fieldset><legend>Upload announcement</legend>
+      <div class="doc-up">
+        <label class="fld"><span class="lbl">Year</span><input id="dYear" type="number" class="year" min="1900" max="9999"></label>
+        <label class="fld grow"><span class="lbl">PDF file (max 10 MB)</span><input id="dFile" type="file" accept="application/pdf,.pdf"></label>
+      </div>
+      <label class="fld"><span class="lbl">Note (optional)</span><input id="dNote" maxlength="1000" placeholder="e.g. HR circular 2027/01, signed by MD; revised 12 Dec"></label>
+      <div class="doc-up-btn"><button id="dUpload" type="button" class="btn primary"><svg class="i"><use href="#i-plus"/></svg>Upload PDF</button></div>
+    </fieldset>
+    <div id="dMsg" class="msg hidden"></div>
+    <div id="dList" class="doc-list"></div>
+    <div class="dlgbtns"><button value="cancel" class="btn soft">Close</button></div>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>

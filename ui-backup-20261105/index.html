@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FreeSWITCH Holiday Calendar</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>FreeSWITCH Holiday Calendar &amp; XML Generator</h1>
+  <nav>
+    <button class="tab active" data-tab="a">A · Companies &amp; Variables</button>
+    <button class="tab" data-tab="b">B · Holiday Calendar &amp; Generator</button>
+    <button id="btnSettings" title="Settings">⚙ Settings</button>
+  </nav>
+</header>
+
+<main>
+<!-- ================= SCREEN A ================= -->
+<section id="screenA" class="screen">
+  <div class="toolbar">
+    <button id="aAddCompany">+ Company</button>
+    <label><input type="checkbox" id="aShowInactive" checked> show inactive</label>
+    <span class="spacer"></span>
+    <span id="aDirty" class="dirty hidden">● unsaved changes</span>
+    <button id="aRevert">Discard</button>
+    <button id="aSave" class="primary">Save</button>
+  </div>
+  <div id="aMsg" class="msg hidden"></div>
+  <table class="registry">
+    <thead><tr><th>Company / Branch</th><th>Working-time variable (exact, case-sensitive)</th><th>Active</th><th>Calendar</th><th></th></tr></thead>
+    <tbody id="aBody"></tbody>
+  </table>
+  <p class="hint">Variables are FreeSWITCH identifiers and are stored exactly as typed. Assignments that use the same variable share one calendar per year.
+  For a company with branches, register variables on the branches; a company-level variable is only generated if you explicitly add one.</p>
+</section>
+
+<!-- ================= SCREEN B ================= -->
+<section id="screenB" class="screen hidden">
+  <div class="toolbar wrap">
+    <label>Year
+      <button id="bYearPrev" class="small">◀</button>
+      <input id="bYear" type="number" min="1900" max="9999" class="year">
+      <button id="bYearNext" class="small">▶</button>
+    </label>
+    <label>Company <select id="bCompany"></select></label>
+    <label id="bBranchWrap">Branch <select id="bBranch"></select></label>
+    <label id="bVarWrap">Variable <select id="bVariable"></select></label>
+    <span id="bVarDisplay" class="vardisplay"></span>
+    <span class="spacer"></span>
+    <button id="bLoadSugg">Load Thai Holiday Suggestions</button>
+    <button id="bCopyFrom">Copy From…</button>
+    <button id="bBulk" class="hidden">Apply to variables…</button>
+  </div>
+  <div id="bShared" class="shared hidden"></div>
+  <div id="bNotice" class="msg hidden"></div>
+  <div id="bSugg" class="sugg hidden"></div>
+
+  <div class="picker">
+    <div class="listcol">
+      <h3>Available <span id="bAvailCount" class="count"></span></h3>
+      <div class="listtools">
+        <button id="bHlAllLeft" class="small">highlight all</button>
+        <input id="bFilterLeft" placeholder="filter…">
+      </div>
+      <ul id="bAvail" class="hlist"></ul>
+      <div class="custom">
+        <input type="date" id="bCustomDate">
+        <input id="bCustomLabel" placeholder="custom holiday name">
+        <button id="bAddCustom">Add custom date</button>
+        <button id="bDeleteHl" class="danger" title="Delete the highlighted holidays from the Available list (Save to make it permanent)" disabled>Delete highlighted</button>
+      </div>
+    </div>
+    <div class="movecol">
+      <button id="bRight" title="Move highlighted to selected">▶</button>
+      <button id="bLeft" title="Move highlighted to available">◀</button>
+      <button id="bSelectAll">Select All ⏩</button>
+      <button id="bRemoveAll">⏪ Remove All</button>
+    </div>
+    <div class="listcol">
+      <h3>Selected holidays <span id="bSelCount" class="count"></span></h3>
+      <div class="listtools">
+        <button id="bHlAllRight" class="small">highlight all</button>
+        <input id="bFilterRight" placeholder="filter…">
+      </div>
+      <ul id="bSelected" class="hlist"></ul>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span class="lg sel">selected</span><span class="lg avail">available (not selected)</span>
+    <span class="lg custom">custom/manual</span><span class="lg wknd">weekend</span>
+    <span class="hint">Click an empty day to create a custom holiday (it appears in Available). Click a holiday day to highlight it.</span>
+  </div>
+  <div id="bCalendar" class="yearcal"></div>
+
+  <div class="toolbar bottom">
+    <span id="bDirty" class="dirty hidden">● unsaved changes</span>
+    <button id="bSave" class="primary">Save</button>
+    <button id="bPreview">Preview XML</button>
+    <button id="bDownload">Download XML</button>
+    <span class="spacer"></span>
+    <span id="bSummary" class="summary"></span>
+  </div>
+  <div id="bXmlWrap" class="hidden">
+    <div id="bWarnings" class="warnings"></div>
+    <pre id="bXml"></pre>
+  </div>
+</section>
+</main>
+
+<!-- dialogs -->
+<dialog id="dlgSettings">
+  <form method="dialog">
+    <h3>Settings</h3>
+    <label>Condition break value
+      <select id="sBreak"><option>never</option><option>on-true</option><option>on-false</option><option>always</option></select>
+    </label>
+    <p class="warn">PROVISIONAL: <code>break="never"</code> is the prototype default. The reference group file uses <code>never</code>, MeSpace uses <code>on-true</code>.
+      Test against the deployed FreeSWITCH dialplan before production use.</p>
+    <fieldset><legend>Holiday suggestion providers</legend>
+      <label><input type="checkbox" id="sProvBot"> Bank of Thailand (official)</label>
+      <input id="sBotUrl" class="wide" placeholder="BOT URL template with {year}">
+      <label><input type="checkbox" id="sProvIcs"> Google public calendar ICS (unverified)</label>
+      <input id="sIcsUrl" class="wide" placeholder="ICS URL">
+    </fieldset>
+    <div class="dlgbtns"><button value="cancel">Cancel</button><button id="sSave" value="default" class="primary">Save settings</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgCopy">
+  <form method="dialog">
+    <h3>Copy dates from…</h3>
+    <label>Source <select id="cSource"></select></label>
+    <label>Year <input id="cYear" type="number" class="year"></label>
+    <label>Mode <select id="cMode"><option value="replace">Replace current selection</option><option value="merge">Add to current selection</option></select></label>
+    <div id="cInfo" class="msg"></div>
+    <div class="dlgbtns"><button value="cancel">Cancel</button><button id="cLoad" value="default" class="primary">Copy (unsaved)</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgBulk">
+  <form method="dialog">
+    <h3>Apply holidays to variable calendars</h3>
+    <div id="kDates" class="msg"></div>
+    <div id="kVars" class="varlist"></div>
+    <div id="kPreview"></div>
+    <p class="hint">Manual exclusions (dates a calendar explicitly removed) are never overwritten.</p>
+    <div class="dlgbtns"><button value="cancel">Close</button><button id="kPrev" type="button">Preview</button><button id="kCommit" type="button" class="primary" disabled>Save to calendars</button></div>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -316,6 +316,9 @@ func (r *renderer) summaryPage(pages map[int]int) {
 	p.SetX(marginL)
 	p.CellFormat(r.contentW, 8, "Summary", "", 1, "L", false, 0, "")
 	r.para(fmt.Sprintf("Holidays %d · saved data only", d.Year), "", 10, cMuted)
+	if d.Filtered {
+		r.para(fmt.Sprintf("Selected companies only: %d of %d registered companies are included in this report.", len(d.Companies), d.TotalCompanies), "B", 10, cPrimary)
+	}
 	p.Ln(3)
 
 	var active, inactive [][]string

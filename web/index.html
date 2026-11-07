@@ -228,7 +228,7 @@
         <button id="bPreview" class="btn dark"><svg class="i"><use href="#i-eye"/></svg>Preview XML</button>
         <button id="bCopyXml" class="btn dark"><svg class="i"><use href="#i-copy"/></svg>Copy XML</button>
         <button id="bDownload" class="btn primary"><svg class="i"><use href="#i-download"/></svg>Download .xml</button>
-        <button id="bReport" class="btn dark" title="PDF of every company, its variables and saved holidays for this year — for checking before deployment"><svg class="i"><use href="#i-file"/></svg>Calendar Report (PDF)</button>
+        <button id="bReport" class="btn dark" title="PDF of all or selected companies, their variables and saved holidays for this year — for checking before deployment"><svg class="i"><use href="#i-file"/></svg>Calendar Report (PDF)</button>
       </div>
     </div>
     <div class="xc-note"><svg class="i"><use href="#i-alert"/></svg>
@@ -285,6 +285,25 @@
     <div id="kPreview"></div>
     <p class="hint">Manual exclusions (dates a calendar explicitly removed) are never overwritten.</p>
     <div class="dlgbtns"><button value="cancel" class="btn soft">Close</button><button id="kPrev" type="button" class="btn ghost">Preview</button><button id="kCommit" type="button" class="btn primary" disabled>Save to calendars</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgReport">
+  <form method="dialog">
+    <div class="dlg-head"><svg class="i"><use href="#i-file"/></svg><h3 id="rTitle">Calendar Report (PDF)</h3></div>
+    <p class="hint">Choose the companies to include. The report uses <b>saved</b> data only; the summary page covers the chosen companies.</p>
+    <div class="rpt-scope">
+      <label class="check"><input type="radio" name="rScope" id="rAll" value="all" checked> All companies</label>
+      <label class="check"><input type="radio" name="rScope" id="rSome" value="some"> Specific companies</label>
+    </div>
+    <div class="rpt-tools hidden" id="rTools">
+      <input id="rFilter" placeholder="Filter companies…">
+      <button id="rCheckAll" type="button" class="btn soft">Select all</button>
+      <button id="rCheckNone" type="button" class="btn soft">Clear</button>
+    </div>
+    <div id="rList" class="varlist hidden"></div>
+    <div id="rInfo" class="msg"></div>
+    <div class="dlgbtns"><button value="cancel" class="btn soft">Cancel</button><button id="rOpen" type="button" class="btn primary"><svg class="i"><use href="#i-file"/></svg>Open PDF</button></div>
   </form>
 </dialog>
 

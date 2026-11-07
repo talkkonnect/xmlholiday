@@ -6,19 +6,39 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/talkkonnect/xmlholiday/internal/report"
 	"github.com/talkkonnect/xmlholiday/internal/store"
 )
 
-// ReportData collects every company, its assignments and the saved holidays
-// of each variable for year (SAVED data only).
-func (s *Server) ReportData(ctx context.Context, year int) (report.Data, error) {
+// ReportData collects the companies, their assignments and the saved holidays
+// of each variable for year (SAVED data only). companyIDs limits the report to
+// those companies; nil or empty means every company. An unknown id is a
+// validation error.
+func (s *Server) ReportData(ctx context.Context, year int, companyIDs []int64) (report.Data, error) {
 	d := report.Data{Year: year, Generated: time.Now(), Calendars: map[string][]report.Day{}}
 	reg, err := s.Store.Registry(ctx)
 	if err != nil {
 		return d, err
+	}
+	d.TotalCompanies = len(reg.Companies)
+	var want map[int64]bool
+	if len(companyIDs) > 0 {
+		want = map[int64]bool{}
+		known := map[int64]bool{}
+		for _, c := range reg.Companies {
+			known[c.ID] = true
+		}
+		for _, id := range companyIDs {
+			if !known[id] {
+				return d, &store.ValidationError{Msg: fmt.Sprintf("unknown company id %d", id)}
+			}
+			want[id] = true
+		}
+		d.Filtered = true
 	}
 	infos, err := s.Store.Assignments(ctx, "")
 	if err != nil {
@@ -29,6 +49,9 @@ func (s *Server) ReportData(ctx context.Context, year int) (report.Data, error) 
 		byCompany[a.CompanyID] = append(byCompany[a.CompanyID], a)
 	}
 	for _, c := range reg.Companies {
+		if want != nil && !want[c.ID] {
+			continue
+		}
 		rc := report.Company{Name: c.Name, Active: c.Active}
 		for _, a := range byCompany[c.ID] {
 			rc.Assignments = append(rc.Assignments, report.Assignment{Branch: a.BranchName, Variable: a.VariableName, Active: a.Active})
@@ -77,9 +100,52 @@ func ReportOptions() (report.Options, error) {
 	return opt, nil
 }
 
-// BuildReport renders the PDF calendar report for year.
-func (s *Server) BuildReport(ctx context.Context, year int) ([]byte, error) {
-	d, err := s.ReportData(ctx, year)
+// CompanyIDsByName resolves company names (case-insensitive) to ids.
+func (s *Server) CompanyIDsByName(ctx context.Context, names []string) ([]int64, error) {
+	reg, err := s.Store.Registry(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var ids []int64
+	for _, n := range names {
+		n = strings.TrimSpace(n)
+		if n == "" {
+			continue
+		}
+		found := false
+		for _, c := range reg.Companies {
+			if strings.EqualFold(c.Name, n) {
+				ids, found = append(ids, c.ID), true
+				break
+			}
+		}
+		if !found {
+			return nil, &store.ValidationError{Msg: fmt.Sprintf("unknown company %q", n)}
+		}
+	}
+	return ids, nil
+}
+
+// parseIDs parses a comma-separated list of positive ids ("" = none).
+func parseIDs(v string) ([]int64, error) {
+	var ids []int64
+	for _, f := range strings.Split(v, ",") {
+		if f = strings.TrimSpace(f); f == "" {
+			continue
+		}
+		id, err := strconv.ParseInt(f, 10, 64)
+		if err != nil || id <= 0 {
+			return nil, &store.ValidationError{Msg: fmt.Sprintf("invalid company id %q", f)}
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
+// BuildReport renders the PDF calendar report for year, limited to
+// companyIDs when non-empty (all companies otherwise).
+func (s *Server) BuildReport(ctx context.Context, year int, companyIDs []int64) ([]byte, error) {
+	d, err := s.ReportData(ctx, year, companyIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +156,8 @@ func (s *Server) BuildReport(ctx context.Context, year int) ([]byte, error) {
 	return report.Render(d, opt)
 }
 
-// GET /api/report/pdf?year=2027[&download=1]
+// GET /api/report/pdf?year=2027[&companies=1,5,7][&download=1]
+// companies limits the report to those company ids; omitted = all companies.
 func (s *Server) reportPDF(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	year, err := parseYear(q.Get("year"))
@@ -98,7 +165,12 @@ func (s *Server) reportPDF(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, err)
 		return
 	}
-	pdf, err := s.BuildReport(r.Context(), year)
+	ids, err := parseIDs(q.Get("companies"))
+	if err != nil {
+		writeErr(w, err)
+		return
+	}
+	pdf, err := s.BuildReport(r.Context(), year, ids)
 	if err != nil {
 		writeErr(w, err)
 		return

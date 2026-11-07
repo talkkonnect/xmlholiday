@@ -110,7 +110,11 @@ tested against FreeSWITCH.** Before production use, on a test FreeSWITCH with th
 
 ## Calendar report (PDF)
 
-Screen B has a **Calendar Report (PDF)** button (or `./xmlholiday report -year 2027`). It prints **one page per
+Screen B has a **Calendar Report (PDF)** button (or `./xmlholiday report -year 2027`). It opens a dialog where you
+choose **All companies** or **Specific companies** (checklist with a filter box; the choice is remembered while the
+page is open). From the command line, `-company "JWD,MeSpace"` limits the report to those companies (names,
+case-insensitive); the API takes `GET /api/report/pdf?year=2027&companies=1,5` (company ids, omitted = all). A
+filtered report says so on its summary page, and the summary covers only the chosen companies. It prints **one page per
 active company that has holidays**, for the selected year, from **saved** data only. Each page shows the company name,
 its variable(s) and branch(es), and a table of holidays. Date, weekday and holiday name are shown in **Thai first, then
 English** (e.g. `1 ม.ค. 2570` / `01 Jan 2027`, `วันศุกร์` / `Friday`, `วันขึ้นปีใหม่` / `New Year’s Day`; Thai names
@@ -146,7 +150,7 @@ GET/POST /api/templates/{year}                 approved standard template
 POST     /api/bulk-apply                       {year, dates, variables, commit:false|true}
 GET      /api/xml/preview?year=                {xml, summary}
 GET      /api/xml/download?year=[&confirm_empty=1]
-GET      /api/report/pdf?year=[&download=1]          PDF holiday report: page per active company + summary page
+GET      /api/report/pdf?year=[&companies=1,5][&download=1]  PDF holiday report (all or chosen companies): page per active company + summary
 GET/PUT  /api/settings                         break, providers, bot_url, ics_url, default_year
 GET      /api/documents[?company_id=]            holiday-announcement PDF metadata (per company/year)
 POST     /api/companies/{id}/documents         multipart: file (PDF, max 10 MB), year, note

@@ -49,6 +49,10 @@ type Data struct {
 	// Calendars holds the selected holidays per variable; a missing key
 	// means no calendar is saved for the year.
 	Calendars map[string][]Day
+	// Filtered is true when Companies is a user-chosen subset of the
+	// TotalCompanies registered companies.
+	Filtered       bool
+	TotalCompanies int
 }
 
 // Options control rendering.

@@ -796,11 +796,10 @@ const B = {
     }
     const a = h('a', { href: url, download: r.summary.filename }); document.body.append(a); a.click(); a.remove();
   },
-  // PDF of all companies, their variables and saved holidays (saved data only).
+  // PDF of all or chosen companies, their variables and saved holidays (saved data only).
   async report() {
     if (!(await this.ensureSavedFirst())) return;
-    const url = `/api/report/pdf?year=${this.year}`;
-    if (!window.open(url, '_blank')) location.href = url;
+    Report.open();
   },
 };
 
@@ -842,6 +841,58 @@ $('bBulk').onclick = () => {
 // ======================================================================
 // Copy From dialog
 // ======================================================================
+// Calendar Report (PDF): choose all companies or specific ones.
+const Report = {
+  chosen: null, // Set of company ids remembered between openings (null = all)
+  open() {
+    const comps = [...B.reg.companies].sort((a, b) => (b.active - a.active) || a.name.localeCompare(b.name));
+    const some = this.chosen !== null;
+    $('rTitle').textContent = `Calendar Report (PDF) — ${B.year}`;
+    $('rAll').checked = !some; $('rSome').checked = some; $('rFilter').value = '';
+    $('rList').replaceChildren(...comps.map((c) => {
+      const nVars = new Set(B.reg.assignments.filter((a) => a.company_id === c.id).map((a) => a.variable_name)).size;
+      return h('label', { 'data-name': c.name.toLowerCase() },
+        h('input', { type: 'checkbox', 'data-id': String(c.id), checked: some ? this.chosen.has(c.id) : false }),
+        ' ' + c.name, h('span', { class: 'muted' }, ` · ${nVars} variable${nVars === 1 ? '' : 's'}${c.active ? '' : ' · inactive'}`));
+    }));
+    this.sync();
+    $('dlgReport').showModal();
+  },
+  ids() { return [...$('rList').querySelectorAll('input[data-id]:checked')].map((c) => Number(c.dataset.id)); },
+  sync() {
+    const some = $('rSome').checked;
+    $('rList').classList.toggle('hidden', !some); $('rTools').classList.toggle('hidden', !some);
+    const total = B.reg.companies.length, n = this.ids().length;
+    $('rInfo').textContent = some ? `${n} of ${total} companies selected.` : `All ${total} companies will be included.`;
+    $('rOpen').disabled = some && n === 0;
+  },
+  filter() {
+    const q = $('rFilter').value.trim().toLowerCase();
+    $('rList').querySelectorAll('label').forEach((l) => l.classList.toggle('hidden', !!q && !l.dataset.name.includes(q)));
+  },
+  setVisible(on) {
+    $('rList').querySelectorAll('label:not(.hidden) input[data-id]').forEach((c) => { c.checked = on; });
+    this.sync();
+  },
+  run() {
+    let url = `/api/report/pdf?year=${B.year}`;
+    if ($('rSome').checked) {
+      const ids = this.ids();
+      if (!ids.length) { alert('Choose at least one company.'); return; }
+      this.chosen = new Set(ids);
+      if (ids.length < B.reg.companies.length) url += `&companies=${ids.join(',')}`;
+    } else this.chosen = null;
+    $('dlgReport').close();
+    if (!window.open(url, '_blank')) location.href = url;
+  },
+};
+$('rAll').onchange = $('rSome').onchange = () => Report.sync();
+$('rList').addEventListener('change', () => Report.sync());
+$('rFilter').oninput = () => Report.filter();
+$('rCheckAll').onclick = () => Report.setVisible(true);
+$('rCheckNone').onclick = () => Report.setVisible(false);
+$('rOpen').onclick = () => Report.run();
+
 const Copy = {
   open() {
     const src = $('cSource'); src.replaceChildren(h('option', { value: TEMPLATE }, '★ Standard template'));

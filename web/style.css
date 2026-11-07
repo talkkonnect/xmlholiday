@@ -344,6 +344,10 @@ dialog legend { font: 600 11px var(--font); text-transform: uppercase; letter-sp
 .dlgbtns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--line); }
 .varlist { max-height: 220px; overflow: auto; border: 1px solid var(--line); border-radius: var(--r-md); padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; background: var(--panel-2); }
 .varlist label { display: flex; align-items: center; gap: 8px; font: 500 12px var(--mono); }
+.rpt-scope { display: flex; gap: 18px; flex-wrap: wrap; }
+.rpt-tools { display: flex; gap: 8px; align-items: center; }
+.rpt-tools input { flex: 1; min-width: 0; }
+#rList label .muted { color: var(--muted); font-weight: 400; }
 table.small { border-collapse: collapse; width: 100%; font-size: 12px; margin-top: 8px; }
 table.small td, table.small th { border: 1px solid var(--line); padding: 4px 8px; text-align: left; vertical-align: top; }
 table.small th { background: var(--panel-3); font: 600 11px var(--font); text-transform: uppercase; letter-spacing: .04em; color: #434655; }

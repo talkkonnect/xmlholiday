@@ -5,7 +5,7 @@
 //	xmlholiday seed   [-dsn ...]                      sample companies/variables (no holiday dates)
 //	xmlholiday import [-dsn ...] -company NAME file.xml...  import existing FreeSWITCH tod XML
 //	xmlholiday xml    [-dsn ...] -year 2027 [-out file]     print/write XML from saved data
-//	xmlholiday report [-dsn ...] -year 2027 [-out file.pdf]  PDF holiday report, one page per company
+//	xmlholiday report [-dsn ...] -year 2027 [-company "A,B"] [-out file.pdf]  PDF holiday report, one page per company
 package main
 
 import (
@@ -45,7 +45,7 @@ func main() {
 	fs := flag.NewFlagSet(cmd, flag.ExitOnError)
 	dsn := fs.String("dsn", envOr("XMLH_DSN", defaultDSN), "MariaDB DSN (env XMLH_DSN)")
 	listen := fs.String("listen", envOr("XMLH_LISTEN", ":8086"), "HTTP listen address (serve)")
-	company := fs.String("company", "", "company to register unknown variables under (import)")
+	company := fs.String("company", "", "import: company to register unknown variables under; report: comma-separated company names to include (default all)")
 	year := fs.Int("year", 0, "year (xml, report)")
 	out := fs.String("out", "", "output file (xml: default stdout; report: default holiday_calendar_report_YEAR.pdf)")
 	fs.Parse(args)
@@ -96,7 +96,14 @@ func main() {
 		if *year == 0 {
 			log.Fatal("-year is required")
 		}
-		pdf, err := server.New(st, nil).BuildReport(ctx, *year)
+		srv := server.New(st, nil)
+		var ids []int64
+		if *company != "" {
+			if ids, err = srv.CompanyIDsByName(ctx, strings.Split(*company, ",")); err != nil {
+				log.Fatal(err)
+			}
+		}
+		pdf, err := srv.BuildReport(ctx, *year, ids)
 		if err != nil {
 			log.Fatal(err)
 		}
